@@ -18,7 +18,7 @@
           lst))
 
 (defparameter *input1*
-  (->> #P"~/Development/MySources/cl-aoc21/day1-input.txt"
+  (->> #P"day1-input.txt"
     (str:from-file)
     (str:split #\NewLine)
     (filter (lambda (str) (> (length str) 0)))
