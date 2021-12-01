@@ -24,7 +24,7 @@
     (filter (lambda (str) (> (length str) 0)))
     (mapcar #'parse-integer)))
 
-(defun count-increased-depths (depths)
+(defun count-increased (depths)
   (let ((increased 0))
     (loop :for i :in depths
           :with previous = nil
@@ -35,13 +35,13 @@
 
 (test day1-1
   "day1-1"
-  (is (= 1446 (count-increased-depths *input1*))))
+  (is (= 1446 (count-increased *input1*))))
 
 
 (defparameter *input2-demo* '(199 200 208 210 200 207 240 269 260 263))
 
 (defun count-increased-depth-sums (depths)
-  (count-increased-depths 
+  (count-increased 
    (loop :for i :from 0 :to (length depths)
          :for n1 = (nth i depths)
          :for n2 = (nth (+ i 1) depths)
