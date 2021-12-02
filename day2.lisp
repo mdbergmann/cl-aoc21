@@ -19,14 +19,18 @@
                 (list x)))
           lst))
 
-(defparameter *input1*
-  (->> #P"day2-input.txt"
-    (str:from-file)
+(defun parse-input (input)
+  (->> input
     (str:split #\NewLine)
     (filter (lambda (str) (> (length str) 0)))
     (mapcar (lambda (line) (let ((line-comps (str:split #\Space line)))
                         (cons (intern (string-upcase (first line-comps)))
                               (parse-integer (second line-comps))))))))
+
+(defparameter *input1*
+  (->> #P"day2-input.txt"
+    (str:from-file)
+    (parse-input)))
 
 (defstruct sub
   (hor-pos 0)
