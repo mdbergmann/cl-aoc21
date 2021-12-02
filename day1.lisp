@@ -1,4 +1,5 @@
-;;(ql:quickload '(:fiveam :str :binding-arrows))
+(in-package :cl-user)
+(ql:quickload '(:fiveam :str :binding-arrows))
 
 (defpackage :aoc21.day1-test
   (:use :cl :fiveam :str :binding-arrows)
@@ -13,8 +14,9 @@
 (in-suite day1-tests)
 
 (defun filter (pred lst)
-  (mapcan (lambda (x) (if (funcall pred x)
-                     (list x)))
+  (mapcan (lambda (x)
+            (if (funcall pred x)
+                (list x)))
           lst))
 
 (defparameter *input1*
@@ -43,10 +45,11 @@
 (defun count-increased-depth-sums (depths)
   (count-increased 
    (loop :for i :from 0 :to (length depths)
-         :for n1 = (nth i depths)
-         :for n2 = (nth (+ i 1) depths)
-         :for n3 = (nth (+ i 2) depths)
-         :for sum = (+ (if n1 n1 0) (if n2 n2 0) (if n3 n3 0))
+         :for elems = (list
+                       (or (nth i depths) 0)
+                       (or (nth (+ i 1) depths) 0)
+                       (or (nth (+ i 2) depths) 0))
+         :for sum = (reduce #'+ elems :initial-value 0)
          :collect sum)))
 
 (test day1-2-demo
