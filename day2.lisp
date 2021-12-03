@@ -43,11 +43,11 @@
   (ecase (car cmd)
     (forward (incf (sub-hor-pos sub) (cdr cmd)))
     (down (incf (sub-depth sub) (cdr cmd)))
-    (up (incf (sub-depth sub) (- (cdr cmd)))))
+    (up (decf (sub-depth sub) (cdr cmd))))
   (cons (sub-hor-pos sub) (sub-depth sub)))
 
 (defun process-cmd-seq (seq sub)
-  (car (reverse (mapcar (lambda (cmd) (process-cmd cmd sub)) seq))))
+  (car (last (mapcar (lambda (cmd) (process-cmd cmd sub)) seq))))
 
 (test day2-1-demo--move-single
   (let ((sub (make-sub)))
@@ -79,7 +79,7 @@
                (incf (sub-hor-pos sub) (cdr cmd))
                (incf (sub-depth sub) (* (cdr cmd) (sub-aim sub)))))
     (down (incf (sub-aim sub) (cdr cmd)))
-    (up (incf (sub-aim sub) (- (cdr cmd)))))
+    (up (decf (sub-aim sub) (cdr cmd))))
   (cons (sub-hor-pos sub) (sub-depth sub)))
 
 (defun process-cmd-seq-2 (seq sub)
