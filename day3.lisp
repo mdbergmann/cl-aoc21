@@ -15,7 +15,7 @@
 
 (defun string-to-bitvector (str)
   (coerce
-   (mapcar (lambda (ch) (parse-integer (string ch))) (coerce str 'list))
+   (map 'simple-bit-vector #'digit-char-p (coerce str 'list))
    'bit-vector))
 
 (defparameter *demo-input*
