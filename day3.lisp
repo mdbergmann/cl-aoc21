@@ -14,9 +14,7 @@
 (in-suite day3-tests)
 
 (defun string-to-bitvector (str)
-  (coerce
-   (map 'simple-bit-vector #'digit-char-p (coerce str 'list))
-   'bit-vector))
+  (map 'simple-bit-vector #'digit-char-p (coerce str 'list)))
 
 (defparameter *demo-input*
   (mapcar #'string-to-bitvector
