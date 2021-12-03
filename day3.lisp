@@ -13,19 +13,6 @@
 
 (in-suite day3-tests)
 
-;; (defun parse-to-command-seq (input)
-;;   (->> input
-;;     (str:split #\NewLine)
-;;     (filter (lambda (str) (> (length str) 0)))
-;;     (mapcar (lambda (line) (let ((line-comps (str:split #\Space line)))
-;;                         (cons (intern (string-upcase (first line-comps)))
-;;                               (parse-integer (second line-comps))))))))
-
-;; (defparameter *input1*
-;;   (->> #P"day2-input.txt"
-;;     (str:from-file)
-;;     (parse-to-command-seq)))
-
 (defun string-to-bitvector (str)
   (coerce
    (mapcar (lambda (ch) (parse-integer (string ch))) (coerce str 'list))
