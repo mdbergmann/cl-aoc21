@@ -19,7 +19,7 @@
                 (list x)))
           lst))
 
-(defun parse-input (input)
+(defun parse-to-command-seq (input)
   (->> input
     (str:split #\NewLine)
     (filter (lambda (str) (> (length str) 0)))
@@ -30,7 +30,7 @@
 (defparameter *input1*
   (->> #P"day2-input.txt"
     (str:from-file)
-    (parse-input)))
+    (parse-to-command-seq)))
 
 (defstruct sub
   (hor-pos 0)
