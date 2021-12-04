@@ -18,7 +18,7 @@
 
 (defun bitvector-to-int (bitvec)
   (reduce #'+
-          (loop :for i :from 0 :upto (- (length bitvec) 1)
+          (loop :for i :from 0 :upto (1- (length bitvec))
                 :for pos = (elt (reverse bitvec) i)
                 :for pow = (ash 1 i)
                 :collect (* pos pow))))
@@ -28,15 +28,12 @@
         :for bit = (elt bitvec index)
         :with ones = 0
         :with zeroes = 0
-        :if (= 0 bit)
-          :do (incf zeroes)
-        :else
-          :do (incf ones)
-        :finally (return (if (> ones zeroes) 1 0))))
+        :do (if (zerop bit) (incf zeroes) (incf ones))
+        :finally (return (if (>= ones zeroes) 1 0))))
 
 (defun most-common-bit-seq (bitvec-seq)
   (coerce
-   (loop :for i :upto (- (length (car bitvec-seq)) 1)
+   (loop :for i :upto (1- (length (car bitvec-seq)))
          :collect (most-common-bit bitvec-seq i))
    'bit-vector))
 
@@ -108,3 +105,67 @@
 
 (run! 'day3-1-demo)
 (run! 'day3-1)
+
+;; ----------------- 2 ------------------
+
+(defun filter (pred lst)
+  (mapcan (lambda (x)
+            (if (funcall pred x)
+                (list x)))
+          lst))
+
+(defun count-elems-with-sig-bit (elems sig-bit index)
+  (count-if (lambda (bitvec)
+              (= (elt bitvec index) sig-bit))
+            elems))
+
+(defun rat-filter (input common-bit-fun sig-bit)
+  (loop :for index :below (length (car input))
+        :with filtered = input
+        :for sig-bit-seq = (funcall common-bit-fun filtered)
+        :while (rest filtered)
+        :do (setf filtered
+                  (filter (lambda (bitvec)
+                            (if (= (count-elems-with-sig-bit filtered 1 index)
+                                   (count-elems-with-sig-bit filtered 0 index))
+                                (= sig-bit (elt bitvec index))
+                                (= (elt sig-bit-seq index)
+                                   (elt bitvec index))))
+                          filtered))
+        :finally (return (values
+                          (bitvector-to-int
+                           (car filtered))
+                          filtered))))
+
+(defun oxy-gen-rat (input)
+  (rat-filter input #'most-common-bit-seq 1))
+  
+(defun co2-scr-rat (input)
+  (rat-filter input #'least-common-bit-seq 0))
+
+(defun day3-2-demo ()
+  (* (oxy-gen-rat *demo-input*)
+     (co2-scr-rat *demo-input*)))
+
+(defun day3-2 ()
+  (* (oxy-gen-rat *input-1*)
+     (co2-scr-rat *input-1*)))
+
+(test oxy-gen-rat
+  (is (= 23
+         (oxy-gen-rat *demo-input*))))
+
+(test co2-scr-rat
+  (is (= 10
+         (co2-scr-rat *demo-input*))))
+
+(test day3-2-demo
+  (is (= 230 (day3-2-demo))))
+
+(test day3-2
+  (is (= 5410338 (day3-2))))
+
+(run! 'oxy-gen-rat)
+(run! 'co2-scr-rat)
+(run! 'day3-2-demo)
+(run! 'day3-2)
