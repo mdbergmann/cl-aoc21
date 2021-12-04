@@ -62,6 +62,16 @@
 (test least-common-bit-seq
   (is (equalp #*01001 (least-common-bit-seq *demo-input*))))
 
+(defun gamma-value (input)
+  (bitvector-to-int (most-common-bit-seq input)))
+
+(defun epsilon-value (input)
+  (bitvector-to-int (least-common-bit-seq input)))
+
+(defun power-consumption (input)
+  (* (gamma-value input)
+     (epsilon-value input)))
+
 (defparameter *demo-input*
   (mapcar #'string-to-bitvector
           '("00100"
@@ -78,8 +88,7 @@
             "01010")))
 
 (test day3-1-demo
-  (is (= 198 (* (bitvector-to-int (most-common-bit-seq *demo-input*))
-                (bitvector-to-int (least-common-bit-seq *demo-input*))))))
+  (is (= 198 (power-consumption *demo-input*))))
 
 (defparameter *input-1*
   (->> #P"day3-input.txt"
@@ -89,8 +98,7 @@
     (mapcar #'string-to-bitvector)))
 
 (test day3-1
-  (is (= 3429254 (* (bitvector-to-int (most-common-bit-seq *input-1*))
-                    (bitvector-to-int (least-common-bit-seq *input-1*))))))
+  (is (= 3429254 (power-consumption *input-1*))))
 
 (run! 'string-to-bitvector)
 (run! 'bitvector-to-int)
