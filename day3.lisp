@@ -1,5 +1,5 @@
 (in-package :cl-user)
-(ql:quickload '(:fiveam :str :binding-arrows :bit-smasher))
+(ql:quickload '(:fiveam :str :binding-arrows))
 
 (defpackage :aoc21.day3-test
   (:use :cl :fiveam :str :binding-arrows :bit-smasher)
@@ -15,6 +15,13 @@
 
 (defun string-to-bitvector (str)
   (map 'simple-bit-vector #'digit-char-p (coerce str 'list)))
+
+(defun bitvector-to-int (bitvec)
+  (reduce #'+
+          (loop :for i :from 0 :upto (- (length bitvec) 1)
+                :for pos = (elt (reverse bitvec) i)
+                :for pow = (ash 1 i)
+                :collect (* pos pow))))
 
 (defparameter *demo-input*
   (mapcar #'string-to-bitvector
@@ -54,6 +61,9 @@
 (test string-to-bitvector
   (is (equalp #*00100 (string-to-bitvector "00100"))))
 
+(test bitvector-to-int
+  (is (= 6 (bitvector-to-int #*00110))))
+
 (test most-common-bit-from-bitvector
   (is (= 1 (most-common-bit *demo-input* 0)))
   (is (= 0 (most-common-bit *demo-input* 1)))
@@ -68,8 +78,8 @@
   (is (equalp #*01001 (least-common-bit-seq *demo-input*))))
 
 (test day3-1-demo
-  (is (= 198 (* (int<- (most-common-bit-seq *demo-input*))
-                (int<- (least-common-bit-seq *demo-input*))))))
+  (is (= 198 (* (bitvector-to-int (most-common-bit-seq *demo-input*))
+                (bitvector-to-int (least-common-bit-seq *demo-input*))))))
 
 (defparameter *input-1*
   (->> #P"day3-input.txt"
@@ -79,10 +89,11 @@
     (mapcar #'string-to-bitvector)))
 
 (test day3-1
-  (is (= 3429254 (* (int<- (most-common-bit-seq *input-1*))
-                    (int<- (least-common-bit-seq *input-1*))))))
+  (is (= 3429254 (* (bitvector-to-int (most-common-bit-seq *input-1*))
+                    (bitvector-to-int (least-common-bit-seq *input-1*))))))
 
 (run! 'string-to-bitvector)
+(run! 'bitvector-to-int)
 (run! 'most-common-bit-from-bitvector)
 (run! 'most-common-bit-seq)
 (run! 'least-common-bit-seq)
