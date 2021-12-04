@@ -2,7 +2,7 @@
 (ql:quickload '(:fiveam :str :binding-arrows))
 
 (defpackage :aoc21.day3-test
-  (:use :cl :fiveam :str :binding-arrows :bit-smasher)
+  (:use :cl :fiveam :str :binding-arrows)
   (:export #:run!
            #:all-tests
            #:nil))
@@ -22,21 +22,6 @@
                 :for pos = (elt (reverse bitvec) i)
                 :for pow = (ash 1 i)
                 :collect (* pos pow))))
-
-(defparameter *demo-input*
-  (mapcar #'string-to-bitvector
-          '("00100"
-            "11110"
-            "10110"
-            "10111"
-            "10101"
-            "01111"
-            "00111"
-            "11100"
-            "10000"
-            "11001"
-            "00010"
-            "01010")))
 
 (defun most-common-bit (bitvec-seq index)
   (loop :for bitvec :in bitvec-seq
@@ -77,6 +62,21 @@
 (test least-common-bit-seq
   (is (equalp #*01001 (least-common-bit-seq *demo-input*))))
 
+(defparameter *demo-input*
+  (mapcar #'string-to-bitvector
+          '("00100"
+            "11110"
+            "10110"
+            "10111"
+            "10101"
+            "01111"
+            "00111"
+            "11100"
+            "10000"
+            "11001"
+            "00010"
+            "01010")))
+
 (test day3-1-demo
   (is (= 198 (* (bitvector-to-int (most-common-bit-seq *demo-input*))
                 (bitvector-to-int (least-common-bit-seq *demo-input*))))))
@@ -97,5 +97,6 @@
 (run! 'most-common-bit-from-bitvector)
 (run! 'most-common-bit-seq)
 (run! 'least-common-bit-seq)
+
 (run! 'day3-1-demo)
 (run! 'day3-1)
