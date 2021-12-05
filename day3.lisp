@@ -119,6 +119,10 @@
               (= (elt bitvec index) sig-bit))
             elems))
 
+(defun equal-common-p (elems index)
+  (= (count-elems-with-sig-bit elems 1 index)
+     (count-elems-with-sig-bit elems 0 index)))
+
 (defun rat-filter (input common-bit-fun sig-bit)
   (loop :for index :below (length (car input))
         :with filtered = input
@@ -126,8 +130,7 @@
         :while (rest filtered)
         :do (setf filtered
                   (filter (lambda (bitvec)
-                            (if (= (count-elems-with-sig-bit filtered 1 index)
-                                   (count-elems-with-sig-bit filtered 0 index))
+                            (if (equal-common-p filtered index)
                                 (= sig-bit (elt bitvec index))
                                 (= (elt sig-bit-seq index)
                                    (elt bitvec index))))
