@@ -138,9 +138,10 @@
 
 (defun winner-board (boards)
   (loop :for board :in boards
+        :for idx :from 0
         :when (or (board-has-fully-marked-row board)
                   (board-has-fully-marked-col board))
-          :collect board))
+          :collect (cons (copy-list board) idx)))
 
 (defun count-unmarked-fields-of (board)
   (reduce #'+
@@ -161,7 +162,7 @@
     (loop :for number :in '(7 4 9 5 11 17 23 2 0 14 21 24)
           :do (setf boards (mark-fields boards number)))
     (is (= 1 (length (winner-board boards))))
-    (is (= 188 (count-unmarked-fields-of (first (winner-board boards)))))))
+    (is (= 188 (count-unmarked-fields-of (caar (winner-board boards)))))))
 
 (test detect-col-win
   (let* ((play-data (parse-input-from-string *demo-input*))
@@ -169,7 +170,7 @@
     (loop :for number :in '(3 9 19 20 14)
           :do (setf boards (mark-fields boards number)))
     (is (= 1 (length (winner-board boards))))
-    (is (= 259 (count-unmarked-fields-of (first (winner-board boards)))))))
+    (is (= 259 (count-unmarked-fields-of (caar (winner-board boards)))))))
 
 (run! 'mark-field)
 (run! 'detect-row-win)
@@ -187,6 +188,35 @@
                        (setf boards (mark-fields boards number))
                        (setf winners (winner-board boards)))
                  :when (car winners)
-                   :return (* number (count-unmarked-fields-of (car winners))))))))
+                   :return (* number (count-unmarked-fields-of (caar winners))))))))
 
 (run! 'day4-1)
+
+;; -------------- 2 -----------------
+
+(test day4-2
+  (let* ((play-data (parse-input-from-file))
+         (numbers (car play-data))
+         (boards (cdr play-data)))
+    (is (= 12738
+           (loop :for number :in numbers
+                 :with winners-idx = nil
+                 :with winners = nil
+                 :with last-winner-number = nil
+                 :do (progn
+                       (setf boards (mark-fields boards number))
+                       (when (> (length (winner-board boards)) (length winners-idx))
+                         (setf winners (winner-board boards))
+                         (loop :for idx :in (mapcar #'cdr winners)
+                               :when (not (member idx winners-idx))
+                                 :do (setf winners-idx (cons idx winners-idx)))
+                         (setf last-winner-number number)))
+                 :finally (return
+                            (* last-winner-number
+                               (count-unmarked-fields-of
+                                (car (find-if (lambda (board)
+                                                (= (car winners-idx)
+                                                   (cdr board)))
+                                              winners))))))))))
+
+(run! 'day4-2)
