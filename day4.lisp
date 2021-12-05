@@ -174,3 +174,19 @@
 (run! 'mark-field)
 (run! 'detect-row-win)
 (run! 'detect-col-win)
+
+;; -------------- 1 ----------------
+(test day4-1
+  (let* ((play-data (parse-input-from-file))
+         (numbers (car play-data))
+         (boards (cdr play-data)))
+    (is (= 8136
+           (loop :for number :in numbers
+                 :with winners = nil
+                 :do (progn
+                       (setf boards (mark-fields boards number))
+                       (setf winners (winner-board boards)))
+                 :when (car winners)
+                   :return (* number (count-unmarked-fields-of (car winners))))))))
+
+(run! 'day4-1)
