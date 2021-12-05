@@ -130,9 +130,16 @@
                    (cdr field)) line))
         board))
 
+(defun board-has-fully-marked-col (board)
+  (some (lambda (index)
+          (every (lambda (line)
+                   (cdr (nth index line))) board))
+        '(0 1 2 3 4)))
+
 (defun winner-board (boards)
   (loop :for board :in boards
-        :when (board-has-fully-marked-row board)
+        :when (or (board-has-fully-marked-row board)
+                  (board-has-fully-marked-col board))
           :collect board))
 
 (defun count-unmarked-fields-of (board)
@@ -151,21 +158,19 @@
 (test detect-row-win
   (let* ((play-data (parse-input-from-string *demo-input*))
          (boards (cdr play-data)))
-    (setf boards (mark-fields boards 7))
-    (is-false (winner-board boards))
-    (setf boards (mark-fields boards 4))
-    (setf boards (mark-fields boards 9))
-    (setf boards (mark-fields boards 5))
-    (setf boards (mark-fields boards 11))
-    (setf boards (mark-fields boards 17))
-    (setf boards (mark-fields boards 23))
-    (setf boards (mark-fields boards 2))
-    (setf boards (mark-fields boards 0))
-    (setf boards (mark-fields boards 14))
-    (setf boards (mark-fields boards 21))
-    (setf boards (mark-fields boards 24))
+    (loop :for number :in '(7 4 9 5 11 17 23 2 0 14 21 24)
+          :do (setf boards (mark-fields boards number)))
     (is (= 1 (length (winner-board boards))))
     (is (= 188 (count-unmarked-fields-of (first (winner-board boards)))))))
 
+(test detect-col-win
+  (let* ((play-data (parse-input-from-string *demo-input*))
+         (boards (cdr play-data)))
+    (loop :for number :in '(3 9 19 20 14)
+          :do (setf boards (mark-fields boards number)))
+    (is (= 1 (length (winner-board boards))))
+    (is (= 259 (count-unmarked-fields-of (first (winner-board boards)))))))
+
 (run! 'mark-field)
 (run! 'detect-row-win)
+(run! 'detect-col-win)
