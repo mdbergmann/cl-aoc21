@@ -13,6 +13,12 @@
 
 (in-suite day5-tests)
 
+(defun filter (pred lst)
+  (mapcan (lambda (x)
+            (if (funcall pred x)
+                (list x)))
+          lst))
+
 ;; ------------- input ---------------
 
 (defparameter *demo-input*
@@ -48,44 +54,83 @@
 
 ;; -------------- demo --------------
 
-(defun point-on-line-p (grid-point line)
-  (flet ((on-x-p (grid-x line)
-           (and (>= grid-x (caar line))
-                (< grid-x (caadr line))))
-         (on-y-p (grid-y line)
-           (and (>= grid-y (cdar line))
-                (< grid-y (cdadr line)))))
-    (or (on-x-p (car grid-point) line) 
-        (on-y-p (cdr grid-point) line))))
+(defun operate-on-grid (grid-size collect-fun)
+  (loop :for x :to (car grid-size)
+        :append (loop :for y :to (cdr grid-size)
+                      :collect (funcall collect-fun (cons x y)))))
 
-(defun detect-overlap (grid-point lines)
-  (length
-   (loop :for line :in lines
-         :collect (point-on-line-p grid-point line))))
+(defun point-on-line-p (grid-point line)
+  (let ((line-x1 (caar line))
+        (line-x2 (caadr line))
+        (line-y1 (cdar line))
+        (line-y2 (cdadr line))
+        (grid-x (car grid-point))
+        (grid-y (cdr grid-point)))
+    (flet ((on-x-p (grid-x)
+             (and (or (and (>= grid-x line-x1)
+                           (<= grid-x line-x2))
+                      (and (<= grid-x line-x1)
+                           (>= grid-x line-x2)))
+                  (= grid-y line-y1 line-y2)))
+           (on-y-p (grid-y)
+             (and (or (and (>= grid-y line-y1)
+                           (<= grid-y line-y2))
+                      (and (<= grid-y line-y1)
+                           (>= grid-y line-y2)))
+                  (= grid-x line-x1 line-x2))))
+      (or (on-x-p (car grid-point))
+          (on-y-p (cdr grid-point))))))
+
+(defun record-overlap-of-point (grid-point lines)
+  (loop :for line :in lines
+        :when (point-on-line-p grid-point line)
+          :collect grid-point))
+
+(defun record-overlap-all (grid-size lines)
+  (operate-on-grid grid-size
+                   (lambda (grid-point)
+                     (record-overlap-of-point grid-point lines))))
+
+(defun record-overlaps-in-records-by-point (grid-point records)
+  (loop :for record :in records
+        :when (> (length record) 0)
+          :collect (count-if (lambda (r) (equal r grid-point))
+                             record)))
+
+(defun find-overlaps (n grid-size lines)
+  (let ((records (record-overlap-all grid-size lines)))
+    (reduce #'+
+            (mapcar (lambda (find)
+                      (count-if (lambda (x)
+                                  (>= x n))
+                                find))
+                    (operate-on-grid grid-size
+                                     (lambda (grid-point)
+                                       (record-overlaps-in-records-by-point
+                                        grid-point
+                                        records)))))))
 
 (test detect-line-on-grid
+  (is-true (point-on-line-p '(1 . 1) '((1 . 1) (2 . 1))))
+  (is-true (point-on-line-p '(2 . 2) '((2 . 2) (2 . 1))))
+  (is-true (point-on-line-p '(2 . 2) '((2 . 2) (2 . 2))))
   (is-true (point-on-line-p '(0 . 1) '((0 . 1) (0 . 2))))
+  (is-true (point-on-line-p '(2 . 1) '((2 . 2) (2 . 1))))
   (is-false (point-on-line-p '(0 . 1) '((0 . 2) (0 . 2))))
-  (is-false (point-on-line-p '(1 . 1) '((0 . 2) (0 . 2)))))
+  (is-false (point-on-line-p '(1 . 1) '((0 . 2) (0 . 2))))
+  (is-false (point-on-line-p '(1 . 1) '((2 . 2) (2 . 2)))))
 
 (test detect-overlappings
-  (is (= 0 (detect-overlap '(1 . 1) '(((2 . 2) (2 . 2))))))
-  (is (= 1 (detect-overlap '(1 . 1) '(((1 . 1) (2 . 1))))))
-  (is (= 2 (detect-overlap '(1 . 1) '(((1 . 1) (2 . 1))
-                                      ((1 . 1) (2 . 1)))))))
+  (is (= 0 (length (record-overlap-of-point '(1 . 1) '(((2 . 2) (2 . 2)))))))
+  (is (= 1 (length (record-overlap-of-point '(1 . 1) '(((1 . 1) (2 . 1)))))))
+  (is (= 2 (length (record-overlap-of-point '(1 . 1) '(((1 . 1) (2 . 1))
+                                                       ((1 . 1) (2 . 1))))))))
 
-;; (defun detect-overlap (overlaps grid-size lines)
-;;   (loop x :from 0 :to (car grid-size)
-;;         :do (loop y :from 0 :to (cdr grid-size)
-;;                   :do )
-;;         ))
-
-;; (test detect-2-overlap-on-demo-grid
-;;   (let ((lines (parse-to-lines-from-string *demo-input*))
-;;         (grid-size '(9 . 9)))
-;;     (print (car lines))
-;;     (is (= 5 (detect-overlap 2 grid-size lines)))))
+(test detect-2-overlap-on-demo-grid
+  (let ((lines (parse-to-lines-from-string *demo-input*))
+        (grid-size '(9 . 9)))
+    (is (= 5 (find-overlaps 2 grid-size lines)))))
 
 (run! 'detect-line-on-grid)
 (run! 'detect-overlappings)
-;;(run! 'detect-2-overlap-on-demo-grid)
+(run! 'detect-2-overlap-on-demo-grid)
