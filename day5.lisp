@@ -31,7 +31,8 @@
 0,9 -> 2,9
 3,4 -> 1,4
 0,0 -> 8,8
-5,5 -> 8,2")
+5,5 -> 8,2
+")
 
 (defun parse-point (point-string)
   (let ((xy (str:split "," point-string)))
@@ -43,6 +44,7 @@
 (defun parse-to-lines-from-string (input-string)
   (->> input-string
     (str:split #\NewLine)
+    (butlast)
     (mapcar #'parse-line)))
 
 (test parse-input-to-list-of-lines
@@ -110,6 +112,18 @@
                                         grid-point
                                         records)))))))
 
+(defun find-grid-size-from-lines (lines)
+  (loop :for line :in lines
+        :with max-x = 0
+        :with max-y = 0
+        :for line-x1 = (caar line)
+        :for line-x2 = (caadr line)
+        :for line-y1 = (cdar line)
+        :for line-y2 = (cdadr line)
+        :do (setf max-x (max max-x line-x1 line-x2)
+                  max-y (max max-y line-y1 line-y2))
+        :finally (return (cons max-x max-y))))
+
 (test detect-line-on-grid
   (is-true (point-on-line-p '(1 . 1) '((1 . 1) (2 . 1))))
   (is-true (point-on-line-p '(2 . 2) '((2 . 2) (2 . 1))))
@@ -131,6 +145,29 @@
         (grid-size '(9 . 9)))
     (is (= 5 (find-overlaps 2 grid-size lines)))))
 
+(test find-grid-size-from-lines
+  (is (equal '(100 . 100) (find-grid-size-from-lines
+                           '(((1 . 5) (5 . 1))
+                             ((100 . 0) (0 . 100))))))
+  )
+
 (run! 'detect-line-on-grid)
 (run! 'detect-overlappings)
+(run! 'find-grid-size-from-lines)
 (run! 'detect-2-overlap-on-demo-grid)
+
+;; ------------- 1 ---------------
+
+(defun day5-1 ()
+  (let* ((lines (parse-to-lines-from-string
+                 (str:from-file #P"day5-input.txt")))
+         (less-lines (subseq lines 0 5))
+         (grid-size (find-grid-size-from-lines less-lines)))
+    (print grid-size)
+    (find-overlaps 2 grid-size less-lines)
+    ))
+
+(test day5-1
+  )
+
+(run! 'day5-1)
