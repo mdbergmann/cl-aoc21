@@ -61,57 +61,6 @@
         :append (loop :for y :to (cdr grid-size)
                       :collect (funcall collect-fun (cons x y)))))
 
-(defun point-on-line-p (grid-point line)
-  (let ((line-x1 (caar line))
-        (line-x2 (caadr line))
-        (line-y1 (cdar line))
-        (line-y2 (cdadr line))
-        (grid-x (car grid-point))
-        (grid-y (cdr grid-point)))
-    (flet ((on-x-p (grid-x)
-             (and (or (and (>= grid-x line-x1)
-                           (<= grid-x line-x2))
-                      (and (<= grid-x line-x1)
-                           (>= grid-x line-x2)))
-                  (= grid-y line-y1 line-y2)))
-           (on-y-p (grid-y)
-             (and (or (and (>= grid-y line-y1)
-                           (<= grid-y line-y2))
-                      (and (<= grid-y line-y1)
-                           (>= grid-y line-y2)))
-                  (= grid-x line-x1 line-x2))))
-      (or (on-x-p (car grid-point))
-          (on-y-p (cdr grid-point))))))
-
-(defun record-overlap-of-point (grid-point lines)
-  (loop :for line :in lines
-        :when (point-on-line-p grid-point line)
-          :collect grid-point))
-
-(defun record-overlap-all (grid-size lines)
-  (operate-on-grid grid-size
-                   (lambda (grid-point)
-                     (record-overlap-of-point grid-point lines))))
-
-(defun record-overlaps-in-records-by-point (grid-point records)
-  (loop :for record :in records
-        :when (> (length record) 0)
-          :collect (count-if (lambda (r) (equal r grid-point))
-                             record)))
-
-(defun find-overlaps (n grid-size lines)
-  (let ((records (record-overlap-all grid-size lines)))
-    (reduce #'+
-            (mapcar (lambda (find)
-                      (count-if (lambda (x)
-                                  (>= x n))
-                                find))
-                    (operate-on-grid grid-size
-                                     (lambda (grid-point)
-                                       (record-overlaps-in-records-by-point
-                                        grid-point
-                                        records)))))))
-
 (defun find-grid-size-from-lines (lines)
   (loop :for line :in lines
         :with max-x = 0
@@ -124,50 +73,103 @@
                   max-y (max max-y line-y1 line-y2))
         :finally (return (cons max-x max-y))))
 
-(test detect-line-on-grid
-  (is-true (point-on-line-p '(1 . 1) '((1 . 1) (2 . 1))))
-  (is-true (point-on-line-p '(2 . 2) '((2 . 2) (2 . 1))))
-  (is-true (point-on-line-p '(2 . 2) '((2 . 2) (2 . 2))))
-  (is-true (point-on-line-p '(0 . 1) '((0 . 1) (0 . 2))))
-  (is-true (point-on-line-p '(2 . 1) '((2 . 2) (2 . 1))))
-  (is-false (point-on-line-p '(0 . 1) '((0 . 2) (0 . 2))))
-  (is-false (point-on-line-p '(1 . 1) '((0 . 2) (0 . 2))))
-  (is-false (point-on-line-p '(1 . 1) '((2 . 2) (2 . 2)))))
+(defun line-vertical-p (line)
+  (let ((line-x1 (caar line))
+        (line-x2 (caadr line)))
+    (= line-x1 line-x2)))
+    
+(defun line-horizontal-p (line)
+  (let ((line-y1 (cdar line))
+        (line-y2 (cdadr line)))
+    (= line-y1 line-y2)))
 
-(test detect-overlappings
-  (is (= 0 (length (record-overlap-of-point '(1 . 1) '(((2 . 2) (2 . 2)))))))
-  (is (= 1 (length (record-overlap-of-point '(1 . 1) '(((1 . 1) (2 . 1)))))))
-  (is (= 2 (length (record-overlap-of-point '(1 . 1) '(((1 . 1) (2 . 1))
-                                                       ((1 . 1) (2 . 1))))))))
+(defun filter-hor-or-vert-lines (lines)
+  (filter (lambda (line)
+            (or (line-vertical-p line)
+                (line-horizontal-p line)))
+          lines))
 
-(test detect-2-overlap-on-demo-grid
-  (let ((lines (parse-to-lines-from-string *demo-input*))
-        (grid-size '(9 . 9)))
-    (is (= 5 (find-overlaps 2 grid-size lines)))))
+(defun add-point (storage point)
+  (let ((curr (gethash point storage 0)))
+    (setf (gethash point storage) (1+ curr))))
 
-(test find-grid-size-from-lines
-  (is (equal '(100 . 100) (find-grid-size-from-lines
-                           '(((1 . 5) (5 . 1))
-                             ((100 . 0) (0 . 100))))))
-  )
+(defun add-points-from-line (storage line)
+  (if (line-horizontal-p line)
+    (let* ((y (cdar line))
+           (x1 (caar line))
+           (x2 (caadr line))
+           (x-min (min x1 x2))
+           (x-max (max x1 x2)))
+      (loop :for x :from x-min :to x-max
+            :for point = (cons x y)
+            :do (add-point storage point)))
+    (let* ((x (caar line))
+           (y1 (cdar line))
+           (y2 (cdadr line))
+           (y-min (min y1 y2))
+           (y-max (max y1 y2)))
+      (loop :for y :from y-min :to y-max
+            :for point = (cons x y)
+            :do (add-point storage point)))))
 
-(run! 'detect-line-on-grid)
-(run! 'detect-overlappings)
-(run! 'find-grid-size-from-lines)
-(run! 'detect-2-overlap-on-demo-grid)
+(test is-line-vertical
+  (is-true (line-vertical-p '((0 . 0) (0 . 5))))
+  (is-false (line-vertical-p '((1 . 0) (0 . 5)))))
 
-;; ------------- 1 ---------------
+(test is-line-horizontal
+  (is-true (line-horizontal-p '((0 . 1) (5 . 1))))
+  (is-false (line-horizontal-p '((0 . 1) (5 . 2)))))
 
-(defun day5-1 ()
-  (let* ((lines (parse-to-lines-from-string
-                 (str:from-file #P"day5-input.txt")))
-         (less-lines (subseq lines 0 5))
-         (grid-size (find-grid-size-from-lines less-lines)))
-    (print grid-size)
-    (find-overlaps 2 grid-size less-lines)
-    ))
+(test filter-lines-for-hor-or-vert-only
+  (let ((lines (parse-to-lines-from-string *demo-input*)))
+    (is (= 10 (length lines)))
+    (is (= 6 (length (filter-hor-or-vert-lines lines))))))
+
+(test build-storage-from-line-points
+  (let ((storage (make-hash-table :test #'equal :lock-free t)))
+    (add-points-from-line storage '((0 . 0) (2 . 0)))
+    (is (= 1 (gethash '(0 . 0) storage)))
+    (is (= 1 (gethash '(1 . 0) storage)))
+    (is (= 1 (gethash '(2 . 0) storage)))
+    (is-false (gethash '(2 . 1) storage))
+    (add-points-from-line storage '((0 . 0) (0 . 2)))
+    (is (= 2 (gethash '(0 . 0) storage)))
+    (is (= 1 (gethash '(0 . 1) storage)))
+    (is (= 1 (gethash '(0 . 2) storage)))
+    (is-false (gethash '(1 . 2) storage))))
+
+(test day5-demo
+  (let ((lines (filter-hor-or-vert-lines
+                (parse-to-lines-from-string *demo-input*)))
+        (storage (make-hash-table :test #'equal :lock-free t))
+        (result 0))
+    (dolist (line lines)
+      (add-points-from-line storage line))
+    (print storage)
+    (maphash (lambda (k v) (if (>= v 2)
+                          (incf result)))
+             storage)
+    (is (= 5 result))))
+
+(run! 'is-line-vertical)
+(run! 'is-line-horizontal)
+(run! 'filter-lines-for-hor-or-vert-only)
+(run! 'build-storage-from-line-points)
+(run! 'day5-demo)
+
+;; --------------- 1 ----------------
 
 (test day5-1
-  )
+  (let ((lines (filter-hor-or-vert-lines
+                (parse-to-lines-from-string (str:from-file #P"day5-input.txt"))))
+        (storage (make-hash-table :test #'equal :lock-free t))
+        (result 0))
+    (dolist (line lines)
+      (add-points-from-line storage line))
+    (print storage)
+    (maphash (lambda (k v) (if (>= v 2)
+                          (incf result)))
+             storage)
+    (is (= 5092 result))))
 
 (run! 'day5-1)
