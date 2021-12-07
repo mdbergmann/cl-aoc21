@@ -35,6 +35,12 @@
      (mapcar #'car new-timers)
      (filter (lambda (timer) timer) (mapcar #'cdr new-timers)))))
 
+(defun generate-fish (initial days)
+  (loop :repeat days
+        :with result = initial
+        :do (setf result (new-day result))
+        :finally (return result)))
+
 (test new-timer
   (is (equal '(2 . nil) (new-timer 3)))
   (is (equal '(1 . nil) (new-timer 2)))
@@ -49,11 +55,7 @@
   (is (equal '(0 1 0 5 6 7 8) (new-day '(1 2 1 6 0 8)))))
 
 (test day6-1-demo
-  (is (= 5934 (length
-               (loop :repeat 80
-                     :with result = *demo-input*
-                     :do (setf result (new-day result))
-                     :finally (return result))))))
+  (is (= 5934 (length (generate-fish *demo-input* 80)))))
 
 (run! 'new-timer)
 (run! 'new-day)
@@ -69,10 +71,6 @@
 
 (test day6-1
   (let ((input (parse-input)))
-    (is (= 390011 (length
-                   (loop :repeat 80
-                         :with result = input
-                         :do (setf result (new-day result))
-                         :finally (return result)))))))
+    (is (= 390011 (length (generate-fish input 80))))))
 
 (run! 'day6-1)
